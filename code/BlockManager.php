@@ -12,7 +12,6 @@ class BlockManager extends Object{
 	 **/
 	private static $themes = array();
 
-
 	/**
 	 * Use default ContentBlock class
 	 * @var Boolean
@@ -32,15 +31,15 @@ class BlockManager extends Object{
 	 * @return array $areas
 	 **/
 	public function getAreasForTheme($theme = null, $keyAsValue = true){
-		$theme 	= $theme ? $theme : $this->getTheme();
+		$theme = $theme ? $theme : $this->getTheme();
 		if(!$theme){
 			return false;
 		}
-		$config = $this->config()->get('themes');
+		$config = $this->getAreaSource($theme);
 		if(!isset($config[$theme]['areas'])){
 			return false;
 		}
-		$areas 	= $config[$theme]['areas'];
+		$areas = $config[$theme]['areas'];
 		$areas = $keyAsValue ? ArrayLib::valuekey(array_keys($areas)) : $areas;
 		if(count($areas)){
 			foreach ($areas as $k => $v) {
@@ -48,7 +47,6 @@ class BlockManager extends Object{
 			}	
 		}
 		return $areas;
-		
 	}
 
 
@@ -142,6 +140,43 @@ class BlockManager extends Object{
 	public function getUseExtraCSSClasses(){
 		$config = $this->getThemeConfig();
 		return isset($config['use_extra_css_classes']) ? $config['use_extra_css_classes'] : false;
+	}
+	
+	/**
+	 * 
+	 * Dictates the definitive source for content-block information.
+	 * 
+	 * Defaults to use of YML config for configuration of content-block areas if
+	 * no CMS user-input. If conflicts arise between names/keys of user-inputted 
+	 * content blocks and YML config, the default priority is to take config from 
+	 * user-input, but this can be overridden using the $priority parameter.
+	 * 
+	 * @param string $theme
+	 * @param string $priority
+	 * @return array
+	 * @todo deal with 'except' and 'only' YML config declarations
+	 * @todo deal with $priority
+	 */
+	public function getAreaSource($theme, $priority = 'User') {
+		// Default to YML config
+		$defaultConfig = $this->config()->get('themes');
+		$sources = Config::inst()->get(__CLASS__, 'config_sources');
+
+		$useDefault = (
+			!$theme || 
+			!in_array($priority, $sources) ||
+			$priority !== 'User'
+		);
+		
+		if($useDefault) {
+			return $defaultConfig;
+		} else {
+			// Use CMS user-defined config
+			$siteConfig = SiteConfig::current_site_config();
+			return array(
+				$theme => array('areas' => $siteConfig->getUserDefinedConfigAreas())
+			);
+		}
 	}
 
 }

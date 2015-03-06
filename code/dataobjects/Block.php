@@ -18,7 +18,7 @@ class Block extends DataObject implements PermissionProvider{
 		'Title' => 'Varchar(255)',
 		'Weight' => 'Int',
 		'Area' => 'Varchar',
-		'Published' => 'Boolean',
+		'Published' => 'Boolean'
 	);
 
 	/**

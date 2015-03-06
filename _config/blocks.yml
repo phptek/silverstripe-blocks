@@ -19,4 +19,14 @@ SiteConfig:
 Block:
   extensions:
     - Versioned('Stage','Live')
+  # Used to display in the CMS' SiteConfig 'User defined content-areas' field
+  default_content_areas:
+    - BeforeContent
+    - Content
+    - AfterContent
+
+BlockManager:
+  config_sources:
+    - YML
+    - User
 

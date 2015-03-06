@@ -15,6 +15,47 @@ class BlocksContentControllerExtension extends Extension {
 			Requirements::css(BLOCKS_DIR . '/css/block-preview.css');
 		}
 	}
+	
+	/**
+	 * 
+	 * Allows us to set and populate config areas without having to manually edit
+	 * any themes' template files.
+	 * 
+	 * @return HTMLText
+	 * @param SS_HTTPRequest $req
+	 * @todo only return something if in user-config mode
+	 * @todo add validation to SiteConfig to disallow deletion of SS' default $Config placeholder
+	 */
+	public function index(SS_HTTPRequest $req) {
+		$siteConfig = SiteConfig::current_site_config();
+		$blockAreas = $siteConfig->getUserDefinedConfigAreas();
+		
+		// Populate incoming vcontent placeholder vars, if configured in CMS' SiteConfig
+		$_blockAreas = [];
+		$content = '';
+		foreach($blockAreas as $areaName) {
+			$content .= (
+				($areaName === 'Content') ? 
+				$this->owner->Content : 
+				$this->owner->BlockArea($areaName)
+			);
+		}
+		
+		// Escape for templates and prevent XSS to boot...
+		$_blockAreas['Content'] = DBField::create_field('HTMLText', $content);
+		
+		/*
+		 * Becuase every theme at least comes with a 'Page.ss' template.
+		 * CWP sites will however need detection so they leverage 'BasePage.ss' instead.
+		 */
+		return $siteConfig->owner->renderWith('Page', array(
+			'Content' => SSViewer::execute_template(
+				'Includes/CustomBlockAreas',
+				null,
+				$_blockAreas
+			)
+		));
+	}
 
 	/**
 	 * Handles blocks attached to a page
